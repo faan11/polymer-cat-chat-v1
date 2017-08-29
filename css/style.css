@@ -39,7 +39,7 @@ paper-fab[icon=send] {
 .occupancy {
     padding: 16px;
 }
-.subdue, .subdue /deep/ div {
+.subdue, .subdue  div {
     color: #999;
 }
 

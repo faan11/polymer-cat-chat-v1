@@ -1,3 +1,8 @@
+
+An attempt to fork it to polymer 2.0. I upgrade everything but still the compomnent core-pubnub can't find the channel.
+I hope that someone can go further.
+To test it use the demo/index.html file.
+ 
 *This is still not completed yet. Certain features are not working as expected. I hope I fins some time to re-work on this project...*
 
 *and a huge thanks to [Whyser](https://github.com/Whyser) and [Zeno Rocha](https://github.com/zenorocha) for helping me!!!*

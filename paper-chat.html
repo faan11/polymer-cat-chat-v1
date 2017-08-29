@@ -1,0 +1,288 @@
+<!-- Polymer -->
+
+<!-- Polymer: Iron (Core) -->
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+
+<!-- Polymer: Paper (Material Design) -->
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+
+<link rel="import" href="../app-layout/app-header/app-header.html">
+<link rel="import" href="../app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../app-layout/app-drawer-layout/app-drawer-layout.html">
+<!-- <link rel="import" href="../paper-icon-button/paper-icon-button.html">-->
+<!-- PubNub Element -->
+<link rel="import" href="../pubnub-element/pubnub-element.html">
+<!-- Custom elements -->
+<link rel="import" href="x-chat-list.html">
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/style.css">
+<script src="../time-elements/time-elements.js"></script>
+<!--
+
+@demo demo/index.html
+-->
+
+<dom-module id="paper-chat">
+  <template>
+    <style >
+    paper-input {
+      padding-right: 10px;
+      --paper-input-container-focus-color: #F44336; /* red */
+    }
+    app-header {
+      --app-header-background: #00BCD4; /* cyan */
+      --app-header: {
+        font-size: 1.2em;
+      };
+    }
+    </style>
+
+        <!-- Use your own publish_key and subscribe_key please!  -->
+        <core-pubnub publish-key="pub-c-156a6d5f-22bd-4a13-848d-b5b4d4b36695" subscribe_key="sub-c-f762fb78-2724-11e4-a4df-02ee2ddab7fe" uuid="{{uuid}}">
+          <core-pubnub-subscribe channel="polymer-chat" id="sub" on-callback="subscribeCallback" on-presence="presenceChanged" on-error="{{error}}">
+            <core-pubnub-publish channel="polymer-chat" message="" id="pub" on-error="{{error}}"></core-pubnub-publish>
+            <core-pubnub-history channel="polymer-chat" count="30" on-success="historyRetrieved" on-error="{{error}}"></core-pubnub-history>
+          </core-pubnub-subscribe>
+        </core-pubnub>
+
+      <!-- Drawer Panel (Left Column) -->
+      <app-drawer-layout id="drawPanel">
+        <app-drawer slot="drawer">
+
+        <!-- Drawer Header/Toolbar -->
+      <!--   <paper-header-panel drawer>
+         <paper-toolbar id="navheader" class="tall">
+            <div class$="{{_colorClass(color)}} middle"  style$="{{_backgroundImage(avatar)}}"></div>
+            <div class="bottom uuid">{{uuid}}</div>
+          </paper-toolbar>-->
+
+          <!-- Drawer Content -->
+          <section id="onlineList">
+            <paper-item class="subdue layout horizontal center">Online Now</paper-item>
+            <template is="dom-repeat" items="{{cats}}" as="cat">
+              <paper-item>{{cat}}</paper-item>
+            </template>
+          </section>
+        </app-drawer>
+
+        <!-- Main Area -->
+        <div>
+
+          <!-- Main Header/Toolbar -->
+        <!--  <paper-toolbar>
+            <div class="flex"></div>
+            <iron-icon icon="account-circle"></iron-icon><span>{{occupancy}}</span>
+          </paper-toolbar> -->
+          <app-header reveals>
+            <app-toolbar>
+              <div main-title><strong>Kitteh Anonymous</strong> powered by PubNub</div>
+            </app-toolbar>
+          </app-header>
+
+          <!-- Main Content -->
+          <div class="layout vertical fit" id="chat">
+            <div class="chat-list flex">
+              <template is="dom-repeat" items="{{messageList}}" as="message">
+                <x-chat-list color="{{message.color}}" avatar="{{message.avatar}}" username="{{message.uuid}}" text="{{message.text}}" status="{{message.status}}" timestamp="{{message.timestamp}}"></x-chat-list>
+              </template>
+            </div>
+            <div class="shim"></div>
+
+            <div class="send-message layout horizontal">
+              <paper-input class="flex" label="Type message..." id="input" value="{{input}}" on-keyup="checkKey"></paper-input>
+              <paper-fab icon="send" id="sendButton" on-tap="sendMyMessage"></paper-fab>
+            </div>
+          </div>
+        </div>
+      </app-drawer-layout>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'paper-chat',
+
+
+
+      properties: {
+        input:{
+          type:String,
+          notify:true
+        },
+        channel:{
+          type:String,
+          notify:true,
+          value:"polymer-chat"
+        },
+        uuid:{
+          type:String,
+          notify:true,
+          computed:"_getCatUidd(color,cat)"
+        },
+        avatar:{
+          type:String,
+          notify:true,
+          computed:"_getAvatar(cat)"
+        },
+        color:{
+          type:String,
+          notify:true,
+          value:function(){
+            var colors = ['navy', 'slate', 'olive', 'moss', 'chocolate', 'buttercup', 'maroon', 'cerise', 'plum', 'orchid'];
+            return colors[(Math.random() * colors.length) >>> 0];
+          }
+        },
+        cat:{
+          type:String,
+          notify:true,
+          value:function(){
+            var cats = ['tabby', 'bengal', 'persian', 'mainecoon', 'ragdoll', 'sphynx', 'siamese', 'korat', 'japanesebobtail', 'abyssinian', 'scottishfold'];
+            return cats[(Math.random() * cats.length) >>> 0];
+          }
+        },
+        cats:{
+          type:Array,
+          notify:true,
+          value:function(){
+            return [];
+          }
+        },
+        messageList:{
+          type:Array,
+          notify:true,
+          value:function(){
+            return [];
+          }
+        },
+        pastMsgs:{
+          type:Array,
+          notify:true,
+          value:function(){
+            return [];
+          }
+        },
+        onlineUuids:{
+          type:Array,
+          notify:true,
+          value:function(){
+            return [];
+          }
+        }
+
+      },
+      error:function(e){
+        console.log(e);
+      },
+      _getCatUidd:function(color,cat){
+        return "color"+ "-" + cat;
+      },
+      _getAvatar:function(cat){
+        return 'images/' + cat + '.jpg';
+      },
+      showNewest:function(){
+        var chatDiv = Polymer.dom(this.root).querySelector('.chat-list');
+        chatDiv.scrollTop = chatDiv.scrollHeight; //TODO: Need to fix so that we can find the .chat-list class object
+      },
+      checkKey:function(e) {
+          if(e.keyCode === 13 || e.charCode === 13) {
+            this.publish();
+          }
+      },
+      sendMyMessage:function(e) {
+          this.publish();
+      },
+      getListWithOnlineStatus:function(list) {
+          [].forEach.call(list, function(l) {
+            // sanitize avatars
+            var catName = (l.uuid + '').split('-')[1];
+            l.avatar = 'images/' + catName + '.jpg';
+
+            if (catName === undefined || /\s/.test(l.uuid)) {
+              l.uuid = 'fail-cat';
+              console.log('Oh you, I made this demo open so nice devs can play with, but you are not nice. Please use your keys, and do not mess with this chat room.');
+            }
+
+            // Check status
+            if(template.cats.indexOf(l.uuid) > -1) {
+              l.status = 'online';
+            } else {
+              l.status = 'offline';
+            }
+          });
+          return list;
+        },
+       displayChatList:function(list) {
+          this.messageList = list;
+          // scroll to bottom when all list items are displayed
+          this.async(showNewest);
+        },
+       subscribeCallback: function(e) {
+          if(this.$.sub.messages.length > 0) { console.log(this.$.sub.messages);
+              this.displayChatList(this.pastMsgs.concat(this.getListWithOnlineStatus(this.$.sub.messages)));
+          }
+        },
+        presenceChanged:function(e) {
+          var i = 0;
+          var l = this.$.sub.presence.length;
+          var d = this.$.sub.presence[l - 1];
+
+          // how many users
+          this.occupancy = d.occupancy;
+
+          // who are online
+          if(d.action === 'join') {
+            if(d.uuid.length > 35) { // pubnub admin console
+              d.uuid = 'the-mighty-big-cat';
+            }
+            this.push('cats', d.uuid);
+
+          } else {
+            var idx = this.cats.indexOf(d.uuid);
+            if(idx > -1) {
+              this.splice('cats', idx, 1);
+            }
+          }
+
+          i++;
+
+          // update the status at the main column
+          if(this.messageList.length > 0) {
+            this.messageList = this.getListWithOnlineStatus(this.messageList);
+          }
+        },
+
+        historyRetrieved:function(e) {
+        if(e.detail[0].length > 0) {
+            this.pastMsgs = this.getListWithOnlineStatus(e.detail[0]);
+            this.displayChatList(pastMsgs);
+          }
+        },
+        publish:function() {
+          if(!this.input) return;
+
+          this.$.pub.message = {
+            uuid: this.uuid,
+            avatar: this.avatar,
+            color: this.color,
+            text: this.input,
+            timestamp: new Date().toISOString()
+          };
+          this.$.pub.publish();
+          this.input = '';
+        },
+        _colorClass:function(color) {
+            return 'middle avatar '+color;
+        },
+        _backgroundImage:function(avatar) {
+            return 'background-image: url('+avatar+');';
+        }
+      });
+
+  </script>
+</dom-module>
